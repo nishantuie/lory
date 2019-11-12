@@ -242,9 +242,10 @@ function lory(slider, opts) {
 
 
         var duration = slideSpeed;
+        var nextOffset = void 0;
 
         var nextSlide = direction ? index + 1 : index - 1;
-        var maxOffset = Math.round(slidesWidth - frameWidth);
+        var maxOffset = options.centerMode.enableCenterMode ? Math.round(slidesWidth - frameWidth) + frameWidth / 2 + slides[0].offsetLeft * -1 + frameWidth / 2 - slides[0].clientWidth / 2 : Math.round(slidesWidth - frameWidth);
 
         dispatchSliderEvent('before', 'slide', {
             index: index,
@@ -288,7 +289,12 @@ function lory(slider, opts) {
             duration = rewindSpeed;
         }
 
-        var nextOffset = Math.min(Math.max(slides[nextIndex].offsetLeft * -1, maxOffset * -1), 0);
+        if (options.centerMode.enableCenterMode) {
+            nextOffset = Math.max(slides[nextIndex].offsetLeft * -1 + frameWidth / 2 - slides[nextIndex].clientWidth / 2, maxOffset * -1);
+            nextOffset = nextOffset >= 0 && options.centerMode.firstSlideLeftAlign ? 0 : nextOffset;
+        } else {
+            nextOffset = Math.min(Math.max(slides[nextIndex].offsetLeft * -1, maxOffset * -1), 0);
+        }
 
         if (rewind && Math.abs(position.x) === maxOffset && direction) {
             nextOffset = 0;
@@ -459,8 +465,13 @@ function lory(slider, opts) {
             index = index + infinite;
             position.x = slides[index].offsetLeft * -1;
         } else {
-            translate(slides[index].offsetLeft * -1, rewindSpeed, ease);
-            position.x = slides[index].offsetLeft * -1;
+            if (options.centerMode.enableCenterMode && !options.centerMode.firstSlideLeftAlign) {
+                translate(slides[index].offsetLeft * -1 + frameWidth / 2 - slides[index].clientWidth / 2, rewindSpeed, ease);
+                position.x = slides[index].offsetLeft * -1 + frameWidth / 2 - slides[index].clientWidth / 2;
+            } else {
+                translate(slides[index].offsetLeft * -1, rewindSpeed, ease);
+                position.x = slides[index].offsetLeft * -1;
+            }
         }
 
         if (classNameActiveSlide) {
@@ -646,7 +657,7 @@ function lory(slider, opts) {
         var direction = delta.x < 0;
 
         if (!isScrolling) {
-            if (isValid && !isOutOfBounds) {
+            if (isValid && !isOutOfBounds || options.centerMode.enableCenterMode) {
                 slide(false, direction);
             } else {
                 translate(position.x, options.snapBackSpeed);
@@ -1013,7 +1024,13 @@ exports.default = {
    * If false, slides lory to the first slide on window resize.
    * @rewindOnResize {boolean}
    */
-  rewindOnResize: true
+  rewindOnResize: true,
+
+  /**
+   * If true, enable centerMode
+   * @centerMode {boolean}
+   */
+  centerMode: { enableCenterMode: false, firstSlideLeftAlign: false }
 };
 
 /***/ }),
